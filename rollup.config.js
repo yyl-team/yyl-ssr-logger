@@ -28,7 +28,7 @@ const config = {
       typescript: require('typescript')
     })
   ],
-  external: ['@yy/allblue-qiankun', 'fetch-polyfill']
+  external: ['dayjs', 'chalk']
 }
 
 export default [
