@@ -28,7 +28,7 @@ const config = {
       typescript: require('typescript')
     })
   ],
-  external: ['dayjs', 'chalk']
+  external: ['dayjs', 'chalk', 'path', 'fs']
 }
 
 export default [

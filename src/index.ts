@@ -54,7 +54,7 @@ export interface LogFormatOption extends Required<LogArgu> {
 }
 
 /** 日志对象 */
-export class Log<T = any> {
+export class Log<T = {}> {
   /** 日志缓存 */
   private logCache: (T & Required<LogFormatOption>)[] = []
   /** interval key */
@@ -87,7 +87,10 @@ export class Log<T = any> {
 
   /** debug 日志接收器 */
   private logger: LogProperty<T>['logger'] = (type, args) => {
-    console.log(`${chalk.green('[ssr]')} - ${chalk.gray(`[${type}]`)}`, ...args)
+    console.log(
+      `${chalk.green('[ssr]')} - ${chalk[type === LogType.Error ? 'red' : 'gray'](`[${type}]`)}`,
+      ...args
+    )
   }
 
   constructor(option?: LogOption<T>) {
@@ -188,24 +191,25 @@ export class Log<T = any> {
     // 运行日志写入
     if (runtimeLogs.length) {
       if (runtimeLimitSize > 0) {
-        if (fs.statSync(runtimeLogPath).size > runtimeLimitSize) {
+        const runtimeSize = fs.statSync(runtimeLogPath).size
+        if (runtimeSize > runtimeLimitSize) {
           // 超出减一半
           const oriLogs = fs.readFileSync(runtimeLogPath).toString().split(logSep)
           fs.writeFileSync(
             runtimeLogPath,
-            `${oriLogs.join(logSep)}${logSep}${runtimeLogs.join(logSep)}`
+            `${oriLogs.join(logSep)}${logSep}${runtimeLogs.join(logSep)}${logSep}`
           )
         } else {
-          fs.appendFileSync(runtimeLogPath, `${logSep}${runtimeLogs.join(logSep)}`)
+          fs.appendFileSync(runtimeLogPath, `${runtimeLogs.join(logSep)}${logSep}`)
         }
       } else {
-        fs.appendFileSync(runtimeLogPath, `${logSep}${runtimeLogs.join(logSep)}`)
+        fs.appendFileSync(runtimeLogPath, `${runtimeLogs.join(logSep)}${logSep}`)
       }
     }
 
     // 错误日志写入
     if (errorLogs.length) {
-      fs.appendFileSync(errorLogPath, `${logSep}${errorLogs.join(logSep)}`)
+      fs.appendFileSync(errorLogPath, `${errorLogs.join(logSep)}${logSep}`)
     }
 
     if (verbose) {

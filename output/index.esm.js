@@ -1,18 +1,12 @@
 /*!
- * yyl-ssr-logger cjs 0.1.0
+ * yyl-ssr-logger esm 0.1.0
  * (c) 2020 - 2020 jackness
  * Released under the MIT License.
  */
-'use strict';
-
-Object.defineProperty(exports, '__esModule', { value: true });
-
-function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
-
-var path = _interopDefault(require('path'));
-var fs = _interopDefault(require('fs'));
-var dayjs = _interopDefault(require('dayjs'));
-var chalk = _interopDefault(require('chalk'));
+import path from 'path';
+import fs from 'fs';
+import dayjs from 'dayjs';
+import chalk from 'chalk';
 
 function mkdirSync(toFile) {
     const tPath = toFile.replace(/[/\\]$/, '');
@@ -28,13 +22,15 @@ function mkdirSync(toFile) {
     return r;
 }
 
+/** 日志类型 */
+var LogType;
 (function (LogType) {
     LogType["Info"] = "info";
     LogType["Warn"] = "warn";
     LogType["Error"] = "error";
     LogType["Success"] = "success";
     LogType["System"] = "system";
-})(exports.LogType || (exports.LogType = {}));
+})(LogType || (LogType = {}));
 /** 日志对象 */
 class Log {
     constructor(option) {
@@ -69,7 +65,7 @@ class Log {
         };
         /** debug 日志接收器 */
         this.logger = (type, args) => {
-            console.log(`${chalk.green('[ssr]')} - ${chalk[type === exports.LogType.Error ? 'red' : 'gray'](`[${type}]`)}`, ...args);
+            console.log(`${chalk.green('[ssr]')} - ${chalk[type === LogType.Error ? 'red' : 'gray'](`[${type}]`)}`, ...args);
         };
         // 属性初始化
         if (option === null || option === void 0 ? void 0 : option.logPath) {
@@ -115,7 +111,7 @@ class Log {
     log(op) {
         var _a;
         const { logCache, verbose, logger } = this;
-        const param = Object.assign(Object.assign({}, op), { type: op.type || exports.LogType.Info, path: op.path || 'system', content: ((_a = op.args) === null || _a === void 0 ? void 0 : _a.map((ctx) => {
+        const param = Object.assign(Object.assign({}, op), { type: op.type || LogType.Info, path: op.path || 'system', content: ((_a = op.args) === null || _a === void 0 ? void 0 : _a.map((ctx) => {
                 if (typeof ctx === 'object') {
                     if (typeof ctx.stack === 'string') {
                         return ctx.stack;
@@ -143,7 +139,7 @@ class Log {
         const runtimeLogs = logCache.map((log) => formatter(log));
         // 错误日志
         const errorLogs = logCache
-            .filter((log) => log.type === exports.LogType.Error)
+            .filter((log) => log.type === LogType.Error)
             .map((log) => formatter(log));
         // 运行日志写入
         if (runtimeLogs.length) {
@@ -167,7 +163,7 @@ class Log {
             fs.appendFileSync(errorLogPath, `${errorLogs.join(logSep)}${logSep}`);
         }
         if (verbose) {
-            logger(exports.LogType.System, [
+            logger(LogType.System, [
                 '写入日志文件完成',
                 `runtime: ${chalk.green(runtimeLogs.length)}`,
                 `error: ${chalk.red(errorLogs.length)}`
@@ -182,4 +178,4 @@ class Log {
     }
 }
 
-exports.Log = Log;
+export { Log, LogType };
