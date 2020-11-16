@@ -38,11 +38,11 @@ export type LogProperty<T> = Required<LogOption<T>>
 /** 日志入参 */
 export interface LogArgu {
   /** 日志类型 */
-  type: LogType
+  type?: LogType
   /** 请求路径 */
   path?: string
   /** 日志内容 */
-  content?: string
+  args: any[]
 }
 
 /** 日志 formatter 额外的参数 */
@@ -76,7 +76,10 @@ export class Log<T = any> {
   private logSep: LogProperty<T>['logSep'] = '\n'
   /** 日志解析器 */
   private formatter: LogProperty<T>['formatter'] = (log) => {
-    return JSON.stringify(log)
+    const rLog: Partial<T & LogFormatOption> = Object.assign({}, log)
+    // 去掉 args 参数
+    delete rLog.args
+    return JSON.stringify(rLog)
   }
 
   constructor(option?: LogOption<T>) {
@@ -126,9 +129,20 @@ export class Log<T = any> {
     const { logCache, verbose } = this
     const param = {
       ...op,
-      type: op.type,
+      type: op.type || LogType.Info,
       path: op.path || 'system',
-      content: op.content || '',
+      content:
+        op.args?.map((ctx) => {
+          if (typeof ctx === 'object') {
+            if (typeof ctx.stack === 'string') {
+              return ctx.stack
+            } else {
+              return JSON.stringify(ctx)
+            }
+          } else {
+            return ctx
+          }
+        }) || '',
       date: dayjs().format('YYYY-MM-DD hh:mm:ss')
     }
     logCache.push(param)
@@ -137,7 +151,7 @@ export class Log<T = any> {
         `${chalk.green('[ssr]')} - ${chalk[op.type === LogType.Error ? 'red' : 'gray'](
           `[${op.type}]`
         )}`,
-        param.content
+        ...param.args
       )
     }
   }
