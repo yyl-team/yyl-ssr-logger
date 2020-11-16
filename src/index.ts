@@ -9,7 +9,8 @@ export enum LogType {
   Info = 'info',
   Warn = 'warn',
   Error = 'error',
-  Success = 'success'
+  Success = 'success',
+  System = 'system'
 }
 
 /** 日志初始化配置 */
@@ -30,6 +31,8 @@ export interface LogOption<T> {
   formatter?: (log: T & LogFormatOption) => string
   /** 日志分隔符 */
   logSep?: string
+  /** debug 日志输出接受函数 */
+  logger?: (type: LogType, args: any[]) => void
 }
 
 /** log 属性用 types */
@@ -82,6 +85,11 @@ export class Log<T = any> {
     return JSON.stringify(rLog)
   }
 
+  /** debug 日志接收器 */
+  private logger: LogProperty<T>['logger'] = (type, args) => {
+    console.log(`${chalk.green('[ssr]')} - ${chalk.gray(`[${type}]`)}`, ...args)
+  }
+
   constructor(option?: LogOption<T>) {
     // 属性初始化
     if (option?.logPath) {
@@ -106,6 +114,10 @@ export class Log<T = any> {
       this.formatter = option.formatter
     }
 
+    if (option?.logger) {
+      this.logger = option.logger
+    }
+
     // 运行日志目录初始化
     const runtimeLogPath = path.resolve(this.logPath, this.runtimeFilename)
     mkdirSync(path.dirname(runtimeLogPath))
@@ -126,7 +138,7 @@ export class Log<T = any> {
 
   /** 日志记录 */
   log(op: T & LogArgu) {
-    const { logCache, verbose } = this
+    const { logCache, verbose, logger } = this
     const param = {
       ...op,
       type: op.type || LogType.Info,
@@ -147,18 +159,22 @@ export class Log<T = any> {
     }
     logCache.push(param)
     if (verbose) {
-      console.log(
-        `${chalk.green('[ssr]')} - ${chalk[op.type === LogType.Error ? 'red' : 'gray'](
-          `[${op.type}]`
-        )}`,
-        ...param.args
-      )
+      logger(param.type, param.args)
     }
   }
 
   /** 日志写入操作 */
   private writer() {
-    const { logCache, runtimeLimitSize, runtimeLogPath, errorLogPath, formatter, logSep } = this
+    const {
+      logCache,
+      runtimeLimitSize,
+      runtimeLogPath,
+      errorLogPath,
+      formatter,
+      logSep,
+      verbose,
+      logger
+    } = this
     if (!logCache.length) {
       return
     }
@@ -191,6 +207,16 @@ export class Log<T = any> {
     if (errorLogs.length) {
       fs.appendFileSync(errorLogPath, `${logSep}${errorLogs.join(logSep)}`)
     }
+
+    if (verbose) {
+      logger(LogType.System, [
+        '写入日志文件完成',
+        `runtime: ${chalk.green(runtimeLogs.length)}`,
+        `error: ${chalk.red(errorLogs.length)}`
+      ])
+    }
+
+    logCache.length = 0
   }
 
   /** 日志清除 */
