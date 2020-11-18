@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "output/index.js",
   "module": "output/index.esm.js",
   "types": "output/index.d.ts",
@@ -33,8 +33,8 @@
     "build": "cross-env NODE_ENV=production rollup --config ./rollup.config.js",
     "w": "rollup --watch --config ./rollup.config.js",
     "release": "yyr",
-    "prepublishOnly": "npm run prettier & npm run build",
-    "test": "jest ./test/jest"
+    "prepublishOnly": "npm run prettier & npm test",
+    "test": "npm run build & jest ./test/jest"
   },
   "devDependencies": {
     "cross-env": "^5.2.0",
@@ -46,7 +46,6 @@
     "rollup-plugin-commonjs": "^9.3.4",
     "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-resolve": "^4.2.1",
-    "rollup-plugin-terser": "^5.3.0",
     "rollup-plugin-typescript2": "^0.20.1",
     "typescript": "^3.8.3",
     "yyl-fs": "^0.3.3",
