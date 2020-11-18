@@ -147,17 +147,19 @@ export class Log<T = {}> {
       type: op.type || LogType.Info,
       path: op.path || 'system',
       content:
-        op.args?.map((ctx) => {
-          if (typeof ctx === 'object') {
-            if (typeof ctx.stack === 'string') {
-              return ctx.stack
+        op.args
+          ?.map((ctx) => {
+            if (typeof ctx === 'object') {
+              if (typeof ctx.stack === 'string') {
+                return ctx.stack
+              } else {
+                return JSON.stringify(ctx)
+              }
             } else {
-              return JSON.stringify(ctx)
+              return ctx
             }
-          } else {
-            return ctx
-          }
-        }) || '',
+          })
+          .join(' ') || '',
       date: dayjs().format('YYYY-MM-DD hh:mm:ss')
     }
     logCache.push(param)

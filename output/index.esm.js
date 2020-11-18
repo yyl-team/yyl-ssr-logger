@@ -1,5 +1,5 @@
 /*!
- * yyl-ssr-logger esm 0.1.0
+ * yyl-ssr-logger esm 0.1.1
  * (c) 2020 - 2020 jackness
  * Released under the MIT License.
  */
@@ -123,7 +123,7 @@ class Log {
                 else {
                     return ctx;
                 }
-            })) || '', date: dayjs().format('YYYY-MM-DD hh:mm:ss') });
+            }).join(' ')) || '', date: dayjs().format('YYYY-MM-DD hh:mm:ss') });
         logCache.push(param);
         if (verbose) {
             logger(param.type, param.args);

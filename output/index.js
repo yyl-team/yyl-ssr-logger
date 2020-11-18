@@ -1,6 +1,185 @@
 /*!
- * yyl-ssr-logger cjs 0.1.0
+ * yyl-ssr-logger cjs 0.1.1
  * (c) 2020 - 2020 jackness
  * Released under the MIT License.
  */
-"use strict";function e(e){return e&&"object"==typeof e&&"default"in e?e.default:e}Object.defineProperty(exports,"__esModule",{value:!0});var t,r=e(require("path")),i=e(require("fs")),o=e(require("dayjs")),n=e(require("chalk"));function s(e){const t=e.replace(/[/\\]$/,""),o=[];return function e(t){i.existsSync(t)||/[/\\]$/.test(t)||(e(r.dirname(t)),i.mkdirSync(t),o.push(t))}(t),o}(t=exports.LogType||(exports.LogType={})).Info="info",t.Warn="warn",t.Error="error",t.Success="success",t.System="system",exports.Log=class{constructor(e){this.logCache=[],this.intervalKey=0,this.runtimeLogPath="",this.errorLogPath="",this.logPath=r.join(process.cwd(),"./log"),this.runtimeLimitSize=2048e3,this.writeInterval=1e3,this.verbose=!1,this.runtimeFilename="runtime.log",this.errorFilename="error.log",this.logSep="\n",this.formatter=e=>{const t=Object.assign({},e);return delete t.args,JSON.stringify(t)},this.logger=(e,t)=>{console.log(`${n.green("[ssr]")} - ${n[e===exports.LogType.Error?"red":"gray"](`[${e}]`)}`,...t)},(null==e?void 0:e.logPath)&&(this.logPath=e.logPath),void 0!==(null==e?void 0:e.runtimeLimitSize)&&(this.runtimeLimitSize=e.runtimeLimitSize),(null==e?void 0:e.writeInterval)&&(this.writeInterval=e.writeInterval),(null==e?void 0:e.verbose)&&(this.verbose=e.verbose),(null==e?void 0:e.runtimeFilename)&&(this.runtimeFilename=e.runtimeFilename),(null==e?void 0:e.errorFilename)&&(this.errorFilename=e.errorFilename),(null==e?void 0:e.formatter)&&(this.formatter=e.formatter),(null==e?void 0:e.logger)&&(this.logger=e.logger);const t=r.resolve(this.logPath,this.runtimeFilename);s(r.dirname(t)),i.writeFileSync(t,""),this.runtimeLogPath=t;const o=r.resolve(this.logPath,this.errorFilename);s(r.dirname(o)),i.writeFileSync(o,""),this.errorLogPath=o,this.intervalKey=setInterval(()=>{this.writer()},this.writeInterval)}log(e){var t;const{logCache:r,verbose:i,logger:n}=this,s=Object.assign(Object.assign({},e),{type:e.type||exports.LogType.Info,path:e.path||"system",content:(null===(t=e.args)||void 0===t?void 0:t.map(e=>"object"==typeof e?"string"==typeof e.stack?e.stack:JSON.stringify(e):e))||"",date:o().format("YYYY-MM-DD hh:mm:ss")});r.push(s),i&&n(s.type,s.args)}writer(){const{logCache:e,runtimeLimitSize:t,runtimeLogPath:r,errorLogPath:o,formatter:s,logSep:l,verbose:a,logger:h}=this;if(!e.length)return;const g=e.map(e=>s(e)),c=e.filter(e=>e.type===exports.LogType.Error).map(e=>s(e));if(g.length)if(t>0)if(i.statSync(r).size>t){const e=i.readFileSync(r).toString().split(l);i.writeFileSync(r,`${e.join(l)}${l}${g.join(l)}${l}`)}else i.appendFileSync(r,`${g.join(l)}${l}`);else i.appendFileSync(r,`${g.join(l)}${l}`);c.length&&i.appendFileSync(o,`${c.join(l)}${l}`),a&&h(exports.LogType.System,["写入日志文件完成","runtime: "+n.green(g.length),"error: "+n.red(c.length)]),e.length=0}clear(){this.logCache=[],clearInterval(this.intervalKey)}};
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+
+var path = _interopDefault(require('path'));
+var fs = _interopDefault(require('fs'));
+var dayjs = _interopDefault(require('dayjs'));
+var chalk = _interopDefault(require('chalk'));
+
+function mkdirSync(toFile) {
+    const tPath = toFile.replace(/[/\\]$/, '');
+    const r = [];
+    (function deep(iPath) {
+        if (fs.existsSync(iPath) || /[/\\]$/.test(iPath)) ;
+        else {
+            deep(path.dirname(iPath));
+            fs.mkdirSync(iPath);
+            r.push(iPath);
+        }
+    })(tPath);
+    return r;
+}
+
+(function (LogType) {
+    LogType["Info"] = "info";
+    LogType["Warn"] = "warn";
+    LogType["Error"] = "error";
+    LogType["Success"] = "success";
+    LogType["System"] = "system";
+})(exports.LogType || (exports.LogType = {}));
+/** 日志对象 */
+class Log {
+    constructor(option) {
+        /** 日志缓存 */
+        this.logCache = [];
+        /** interval key */
+        this.intervalKey = 0;
+        /** 运行日志目录 */
+        this.runtimeLogPath = '';
+        /** 错误日志目录 */
+        this.errorLogPath = '';
+        /** 日志存储路径 */
+        this.logPath = path.join(process.cwd(), './log');
+        /** log 大小上限 */
+        this.runtimeLimitSize = 1000 * 1024 * 2;
+        /** 日志写入间隔 */
+        this.writeInterval = 1000;
+        /** 打印日志 */
+        this.verbose = false;
+        /** 运行日志文件名 */
+        this.runtimeFilename = 'runtime.log';
+        /** 错误日志文件名 */
+        this.errorFilename = 'error.log';
+        /** 日志分隔符 */
+        this.logSep = '\n';
+        /** 日志解析器 */
+        this.formatter = (log) => {
+            const rLog = Object.assign({}, log);
+            // 去掉 args 参数
+            delete rLog.args;
+            return JSON.stringify(rLog);
+        };
+        /** debug 日志接收器 */
+        this.logger = (type, args) => {
+            console.log(`${chalk.green('[ssr]')} - ${chalk[type === exports.LogType.Error ? 'red' : 'gray'](`[${type}]`)}`, ...args);
+        };
+        // 属性初始化
+        if (option === null || option === void 0 ? void 0 : option.logPath) {
+            this.logPath = option.logPath;
+        }
+        if ((option === null || option === void 0 ? void 0 : option.runtimeLimitSize) !== undefined) {
+            this.runtimeLimitSize = option.runtimeLimitSize;
+        }
+        if (option === null || option === void 0 ? void 0 : option.writeInterval) {
+            this.writeInterval = option.writeInterval;
+        }
+        if (option === null || option === void 0 ? void 0 : option.verbose) {
+            this.verbose = option.verbose;
+        }
+        if (option === null || option === void 0 ? void 0 : option.runtimeFilename) {
+            this.runtimeFilename = option.runtimeFilename;
+        }
+        if (option === null || option === void 0 ? void 0 : option.errorFilename) {
+            this.errorFilename = option.errorFilename;
+        }
+        if (option === null || option === void 0 ? void 0 : option.formatter) {
+            this.formatter = option.formatter;
+        }
+        if (option === null || option === void 0 ? void 0 : option.logger) {
+            this.logger = option.logger;
+        }
+        // 运行日志目录初始化
+        const runtimeLogPath = path.resolve(this.logPath, this.runtimeFilename);
+        mkdirSync(path.dirname(runtimeLogPath));
+        fs.writeFileSync(runtimeLogPath, '');
+        this.runtimeLogPath = runtimeLogPath;
+        // 错误日志目录初始化
+        const errorLogPath = path.resolve(this.logPath, this.errorFilename);
+        mkdirSync(path.dirname(errorLogPath));
+        fs.writeFileSync(errorLogPath, '');
+        this.errorLogPath = errorLogPath;
+        // 启动定时任务
+        this.intervalKey = setInterval(() => {
+            this.writer();
+        }, this.writeInterval);
+    }
+    /** 日志记录 */
+    log(op) {
+        var _a;
+        const { logCache, verbose, logger } = this;
+        const param = Object.assign(Object.assign({}, op), { type: op.type || exports.LogType.Info, path: op.path || 'system', content: ((_a = op.args) === null || _a === void 0 ? void 0 : _a.map((ctx) => {
+                if (typeof ctx === 'object') {
+                    if (typeof ctx.stack === 'string') {
+                        return ctx.stack;
+                    }
+                    else {
+                        return JSON.stringify(ctx);
+                    }
+                }
+                else {
+                    return ctx;
+                }
+            }).join(' ')) || '', date: dayjs().format('YYYY-MM-DD hh:mm:ss') });
+        logCache.push(param);
+        if (verbose) {
+            logger(param.type, param.args);
+        }
+    }
+    /** 日志写入操作 */
+    writer() {
+        const { logCache, runtimeLimitSize, runtimeLogPath, errorLogPath, formatter, logSep, verbose, logger } = this;
+        if (!logCache.length) {
+            return;
+        }
+        // 运行日志
+        const runtimeLogs = logCache.map((log) => formatter(log));
+        // 错误日志
+        const errorLogs = logCache
+            .filter((log) => log.type === exports.LogType.Error)
+            .map((log) => formatter(log));
+        // 运行日志写入
+        if (runtimeLogs.length) {
+            if (runtimeLimitSize > 0) {
+                const runtimeSize = fs.statSync(runtimeLogPath).size;
+                if (runtimeSize > runtimeLimitSize) {
+                    // 超出减一半
+                    const oriLogs = fs.readFileSync(runtimeLogPath).toString().split(logSep);
+                    fs.writeFileSync(runtimeLogPath, `${oriLogs.join(logSep)}${logSep}${runtimeLogs.join(logSep)}${logSep}`);
+                }
+                else {
+                    fs.appendFileSync(runtimeLogPath, `${runtimeLogs.join(logSep)}${logSep}`);
+                }
+            }
+            else {
+                fs.appendFileSync(runtimeLogPath, `${runtimeLogs.join(logSep)}${logSep}`);
+            }
+        }
+        // 错误日志写入
+        if (errorLogs.length) {
+            fs.appendFileSync(errorLogPath, `${errorLogs.join(logSep)}${logSep}`);
+        }
+        if (verbose) {
+            logger(exports.LogType.System, [
+                '写入日志文件完成',
+                `runtime: ${chalk.green(runtimeLogs.length)}`,
+                `error: ${chalk.red(errorLogs.length)}`
+            ]);
+        }
+        logCache.length = 0;
+    }
+    /** 日志清除 */
+    clear() {
+        this.logCache = [];
+        clearInterval(this.intervalKey);
+    }
+}
+
+exports.Log = Log;
