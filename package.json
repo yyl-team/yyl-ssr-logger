@@ -55,7 +55,7 @@
   "name": "yyl-ssr-logger",
   "description": "yyl-ssr logger",
   "repository": "https://github.com/jackness1208/yyl-ssr-logger.git",
-  "author": "liudaojie <liudaojie@yy.com>",
+  "author": "jackness1208",
   "license": "MIT",
   "dependencies": {
     "@types/node": "^14.14.7",
